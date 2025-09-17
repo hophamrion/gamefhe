@@ -8,6 +8,18 @@ type Skill = 0|1|2; // Slash / Thrust / Bash
 type Elem  = 0|1|2; // Fire / Water / Wood
 const W = 1680, H = 900;
 
+// Layout đối xứng theo W/H
+const LAYOUT = {
+  PAD_X: Math.round(W * 0.07),     // lề hai bên
+  GROUND_Y: Math.round(H * 0.62),  // cao độ sàn
+  CHAR_OFFSET: Math.round(W * 0.06) // khoảng cách nhân vật tới lề trong
+};
+const POS = {
+  MID_X: Math.round(W * 0.5),
+  HERO_X: Math.round(W * 0.5 - (W * 0.25)),
+  OPP_X:  Math.round(W * 0.5 + (W * 0.25))
+};
+
 export default function AnimeDuelChibiPIXI() {
   const holderRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
@@ -27,13 +39,14 @@ export default function AnimeDuelChibiPIXI() {
   useEffect(() => {
     const initPIXI = async () => {
       const app = new PIXI.Application();
-      await app.init({ width: W, height: H, antialias: true, backgroundAlpha: 0 });
+      await app.init({
+        width: W, height: H,
+        antialias: true, backgroundAlpha: 0,
+        resolution: Math.min(window.devicePixelRatio || 1, 2)
+      });
       appRef.current = app;
       
       if (holderRef.current) {
-        app.canvas.style.width = '100%';
-        app.canvas.style.height = '100%';
-        app.canvas.style.display = 'block';
         holderRef.current.appendChild(app.canvas);
       }
       
@@ -237,28 +250,22 @@ export default function AnimeDuelChibiPIXI() {
 /* ---------------- PIXI scene ---------------- */
 
 function fit(app: PIXI.Application, el: HTMLElement) {
-  // Scale để fill toàn màn hình Chrome
-  const scaleX = el.clientWidth / W;
-  const scaleY = el.clientHeight / H;
-  const scale = Math.max(scaleX, scaleY); // Dùng max để fill toàn màn hình
-  
-  app.stage.scale.set(scale);
+  const s = Math.min(el.clientWidth / W, el.clientHeight / H); // CONTAIN
+  app.stage.scale.set(s);
 
-  const css = app.canvas as HTMLCanvasElement;
+  const css = app.canvas as HTMLCanvasElement; // PIXI v8
   css.style.position = 'absolute';
-  css.style.width  = `${W * scale}px`;
-  css.style.height = `${H * scale}px`;
-  css.style.left   = `${(el.clientWidth  - W * scale) / 2}px`;
-  css.style.top    = `${(el.clientHeight - H * scale) / 2}px`;
+  css.style.width  = `${W * s}px`;
+  css.style.height = `${H * s}px`;
+  css.style.left   = `${(el.clientWidth  - W * s) / 2}px`;
+  css.style.top    = `${(el.clientHeight - H * s) / 2}px`;
 }
 
 function buildScene(app: PIXI.Application) {
-  const GROUND_Y = 305;  // mốc sàn cố định trong stage 720×405
-  
   const root = new PIXI.Container();
   app.stage.addChild(root);
 
-  // BG: stars + parallax nebula
+  // --- BG & Floor ---
   const bg = new PIXI.Container(); root.addChild(bg);
   const stars = new PIXI.Container(); bg.addChild(stars);
   for (let i=0;i<80;i++){
@@ -266,38 +273,36 @@ function buildScene(app: PIXI.Application) {
     g.x = Math.random()*W; g.y = Math.random()*H; g.alpha = 0.25 + Math.random()*0.45;
     stars.addChild(g);
   }
-  const floor = new PIXI.Graphics().roundRect(60, GROUND_Y-5, W-120, 90, 24).fill(0x0d1426);
-  floor.alpha = 0.85;
-  bg.addChild(floor);
+  const floor = new PIXI.Graphics()
+    .roundRect(LAYOUT.PAD_X, LAYOUT.GROUND_Y - 5, W - LAYOUT.PAD_X*2, Math.round(H*0.1), 24)
+    .fill(0x0d1426);
+  floor.alpha = 0.85; bg.addChild(floor);
 
-  // Arena & layers
+  // --- Arena & Chibi ---
   const arena = new PIXI.Container(); root.addChild(arena);
   const hero = makeChibi(0x4c70ff);
   const opp  = makeChibi(0xff6a6a, true);
-  hero.position.set(170, GROUND_Y);
-  opp.position.set(W - 170, GROUND_Y);
+
+  hero.position.set(POS.HERO_X, LAYOUT.GROUND_Y);
+  opp.position.set(POS.OPP_X, LAYOUT.GROUND_Y);
   arena.addChild(hero.view, opp.view);
 
-  // Idle bobbing + blink (dựa trên GROUND_Y, không thay đổi gốc)
-  let t = 0;
-  app.ticker.add((ticker) => {
-    const dt = ticker.deltaTime;
-    t += dt / 60;
-    hero.view.y = GROUND_Y + Math.sin(t * 2) * 2;
-    opp.view.y  = GROUND_Y + Math.sin(t * 2 + Math.PI) * 2;
+  // Idle bob (tịnh tiến quanh GROUND_Y)
+  let t = 0; app.ticker.add((tk)=>{
+    t += tk.deltaTime/60;
+    hero.view.y = LAYOUT.GROUND_Y + Math.sin(t*2)*2;
+    opp.view.y  = LAYOUT.GROUND_Y + Math.sin(t*2 + Math.PI)*2;
     hero.idle(t); opp.idle(t);
   });
 
-  // HP bars
-  const hpA = makeHpBar(60, 60, W/2-90, 16);
-  const hpB = makeHpBar(W/2+30, 60, W/2-90, 16, true);
+  // --- HP bars đối xứng quanh MID_X ---
+  const BAR_W = Math.round(W * 0.32);
+  const BAR_H = 16;
+  const hpA = makeHpBar(POS.MID_X - BAR_W - 24, 40, BAR_W, BAR_H);
+  const hpB = makeHpBar(POS.MID_X + 24,          40, BAR_W, BAR_H, true);
   root.addChild(hpA.view, hpB.view);
 
-  return {
-    root, arena,
-    hero, opp,
-    hpA, hpB
-  };
+  return { root, arena, hero, opp, hpA, hpB };
 }
 
 /* ---------- Chibi rig ---------- */
@@ -400,38 +405,48 @@ function makeHpBar(x:number, y:number, w:number, h:number, right=false) {
 /* ---------- VFX ---------- */
 function vfxSlash(sc: ReturnType<typeof buildScene>) {
   const g = new PIXI.Graphics(); sc.arena.addChild(g);
-  let t=0; const dur=0.32;
-  const tick=(ticker: PIXI.Ticker)=>{ 
-    const dt = ticker.deltaTime;
-    t+=dt/60; const p=Math.min(1,t/dur); g.clear();
-    g.lineStyle(10*(1-p), 0xffffff, 0.9);
-    const cx = 410 + 120*p, cy = 215 - 24*Math.sin(p*Math.PI);
-    g.arc(cx, cy, 70, -1.2, -0.2);
+  let t=0, dur=0.32;
+  const y = LAYOUT.GROUND_Y - 40;
+  const from = POS.HERO_X + 40, to = POS.OPP_X - 40;
+  const tick = (tk: PIXI.Ticker) => {
+    t += tk.deltaTime/60;
+    const p = Math.min(1, t/dur);
+    g.clear();
+    g.lineStyle(10*(1-p), 0xffffff, .9);
+    const cx = from + (to-from)*p;
+    g.arc(cx, y, Math.min(120, (to-from)*0.35), -1.2, -0.2);
     if (p>=1){ g.destroy(); PIXI.Ticker.shared.remove(tick); }
-  }; PIXI.Ticker.shared.add(tick);
+  };
+  PIXI.Ticker.shared.add(tick);
 }
 
 function vfxThrust(sc: ReturnType<typeof buildScene>) {
   const g = new PIXI.Graphics(); sc.arena.addChild(g);
-  let t=0; const dur=0.3;
-  const tick=(ticker: PIXI.Ticker)=>{ 
-    const dt = ticker.deltaTime;
-    t+=dt/60; const p=Math.min(1,t/dur); g.clear();
-    const x0=280, x1=460; g.lineStyle(6, 0xeaeaff, .95).moveTo(x0,220).lineTo(x0+(x1-x0)*p,220);
+  let t=0, dur=0.30;
+  const y = LAYOUT.GROUND_Y - 30;
+  const x0 = POS.HERO_X + 50, x1 = POS.OPP_X - 50;
+  const tick = (tk: PIXI.Ticker)=>{
+    t += tk.deltaTime/60;
+    const p = Math.min(1, t/dur);
+    g.clear();
+    g.lineStyle(6, 0xeaeaff, .95).moveTo(x0, y).lineTo(x0 + (x1-x0)*p, y);
     g.lineStyle(2, 0xbfd1ff, .7);
-    for (let i=0;i<4;i++){ const y=200+i*10; g.moveTo(x0+30*p,y).lineTo(x0+60*p,y); }
+    for (let i=0;i<4;i++){ const yy = y-20 + i*10; g.moveTo(x0+20*p,yy).lineTo(x0+50*p,yy); }
     if (p>=1){ g.destroy(); PIXI.Ticker.shared.remove(tick); }
-  }; PIXI.Ticker.shared.add(tick);
+  };
+  PIXI.Ticker.shared.add(tick);
 }
 
 function vfxBash(sc: ReturnType<typeof buildScene>) {
   const circle = new PIXI.Graphics(); sc.arena.addChild(circle);
-  let t=0; const dur=0.38;
-  const tick=(ticker: PIXI.Ticker)=>{ 
-    const dt = ticker.deltaTime;
-    t+=dt/60; const p=Math.min(1,t/dur); const r=8+90*p;
-    circle.clear().lineStyle(8*(1-p), 0xffe29b, .9).drawCircle(520,220,r);
+  let t=0, dur=0.38;
+  const cx = POS.OPP_X - 20, cy = LAYOUT.GROUND_Y - 20;
+  const tick = (tk: PIXI.Ticker)=>{
+    t += tk.deltaTime/60;
+    const p = Math.min(1, t/dur); const r = 20 + (POS.OPP_X-POS.HERO_X)*0.22*p;
+    circle.clear().lineStyle(8*(1-p), 0xffe29b, .9).drawCircle(cx, cy, r);
     const sAmt = (1-p)*2; sc.root.position.set((Math.random()-0.5)*sAmt,(Math.random()-0.5)*sAmt);
     if (p>=1){ circle.destroy(); PIXI.Ticker.shared.remove(tick); sc.root.position.set(0,0); }
-  }; PIXI.Ticker.shared.add(tick);
+  };
+  PIXI.Ticker.shared.add(tick);
 }
