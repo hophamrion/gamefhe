@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
+.pixel-frame { border: 2px solid #222; box-shadow: 0 4px 0 #222; }
+.uibox { border: 2px solid #222; background:#ffe8b0; padding:6px; }
+.btn-px {
+  border: 2px solid #222; background: #ffd37f;
+  padding: 6px 8px; box-shadow: 0 3px 0 #222; cursor: pointer;
+  text-transform: uppercase; font-size: 8px; line-height: 1;
+}
+.btn-px:active { transform: translateY(2px); box-shadow: 0 1px 0 #222; }
+.btn-px:disabled { cursor: not-allowed; }
+.hpbar { height: 8px; border:2px solid #222; background:#e43; }
+.hpbar > div { height:100%; background:#6fed7d; }
+
+@keyframes shake-kf {
+  0% { transform: translate(0,0); }
+  25% { transform: translate(-1px,0); }
+  50% { transform: translate(1px,0); }
+  75% { transform: translate(0,1px); }
+  100% { transform: translate(0,0); }
+}
+.shake { animation: shake-kf 0.22s steps(2) both; }
+
+@keyframes flash-kf {
+  0% { filter: brightness(1); }
+  40% { filter: brightness(2.2); }
+  100% { filter: brightness(1); }
+}
+.flash { animation: flash-kf 0.12s linear both; }

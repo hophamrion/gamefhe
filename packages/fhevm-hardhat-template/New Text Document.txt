@@ -1,0 +1,3 @@
+MNEMONIC="share zoo primary elephant horror quick burger grape orphan eye patient offer"
+INFURA_API_KEY="09312fc6fc80421299231e18e15d26be"
+ETHERSCAN_API_KEY="your_etherscan_api_key_here"

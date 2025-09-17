@@ -1,0 +1,237 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.zama-bg {
+  background-color: #ffd200;
+}
+
+/* Pixel-perfect rendering */
+.pixelated { 
+  image-rendering: pixelated; 
+  image-rendering: crisp-edges; 
+}
+
+canvas { 
+  image-rendering: pixelated; 
+}
+
+/* Pixel UI Components - Updated from v2 */
+.pixel-frame { 
+  border: 3px solid #1b1b1b; 
+  box-shadow: 0 4px 0 #1b1b1b; 
+  background: linear-gradient(to bottom, #8ec5ff, #6fb1ff);
+}
+
+.uibox { 
+  border: 3px solid #1b1b1b; 
+  background: #f4d9a9; 
+  padding: 6px; 
+}
+
+.uibox.dark { 
+  background: #e8c88b; 
+}
+
+.btn-px { 
+  border: 3px solid #1b1b1b; 
+  background: #ffd37f; 
+  padding: 8px 10px; 
+  box-shadow: 0 3px 0 #1b1b1b; 
+  cursor: pointer; 
+  font-size: 10px; 
+  text-transform: uppercase; 
+}
+
+.btn-px:active { 
+  transform: translateY(2px); 
+  box-shadow: 0 1px 0 #1b1b1b; 
+}
+
+.btn-icon { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+}
+
+.btn-icon img { 
+  width: 16px; 
+  height: 16px; 
+  image-rendering: pixelated; 
+}
+
+.hpbar { 
+  height: 8px; 
+  border: 3px solid #1b1b1b; 
+  background: #d44; 
+}
+
+.hpbar > div { 
+  height: 100%; 
+  background: #67e56e; 
+}
+
+/* Sprite animations */
+.sprite { 
+  width: 48px; 
+  height: 48px; 
+  image-rendering: pixelated; 
+  background-repeat: no-repeat; 
+}
+
+.sprite.hero.idle { 
+  background-image: url('/sprites/hero_idle.png'); 
+  animation: heroIdle 0.6s steps(4) infinite; 
+}
+
+.sprite.hero.atk { 
+  background-image: url('/sprites/hero_atk.png'); 
+  animation: heroAtk 0.28s steps(4) 1; 
+}
+
+.sprite.opp.idle { 
+  background-image: url('/sprites/opp_idle.png'); 
+  animation: oppIdle 0.6s steps(4) infinite; 
+}
+
+.sprite.opp.atk { 
+  background-image: url('/sprites/opp_atk.png'); 
+  animation: oppAtk 0.28s steps(4) 1; 
+}
+
+@keyframes heroIdle { 
+  from { background-position: 0 0 } 
+  to { background-position: -64px 0 } 
+}
+
+@keyframes oppIdle { 
+  from { background-position: 0 0 } 
+  to { background-position: -64px 0 } 
+}
+
+@keyframes heroAtk { 
+  from { background-position: 0 0 } 
+  to { background-position: -64px 0 } 
+}
+
+@keyframes oppAtk { 
+  from { background-position: 0 0 } 
+  to { background-position: -64px 0 } 
+}
+
+/* Legacy animations */
+@keyframes shake-kf { 
+  0% { transform: translate(0,0); }
+  25% { transform: translate(-1px, 0); }
+  50% { transform: translate(1px, 0); }
+  75% { transform: translate(0, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.shake { 
+  animation: shake-kf .22s steps(2) both; 
+}
+
+@keyframes flash-kf { 
+  0% { filter: brightness(1); }
+  40% { filter: brightness(2.2); }
+  100% { filter: brightness(1); }
+}
+
+.flash { 
+  animation: flash-kf .12s linear both; 
+}
+
+/* Element picker overlay */
+.overlay { 
+  position: absolute; 
+  inset: 0; 
+  background: rgba(0,0,0,.35); 
+  display: grid; 
+  place-items: center; 
+}
+
+.picker { 
+  background: #f4d9a9; 
+  border: 3px solid #1b1b1b; 
+  padding: 12px; 
+  display: grid; 
+  gap: 10px; 
+}
+
+.picker .grid3 { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 10px; 
+}
+
+.tile { 
+  border: 3px solid #1b1b1b; 
+  background: #fff3cd; 
+  display: grid; 
+  place-items: center; 
+  padding: 8px; 
+  cursor: pointer; 
+}
+
+.tile:hover { 
+  background: #ffe7a8 
+}
+
+.tile img { 
+  width: 24px; 
+  height: 24px 
+}
+
+/* Anime UI Styles */
+.uibox { 
+  border: 2px solid #1b1b1b; 
+  background: #fff3d3; 
+  padding: 6px 10px; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 0 #1b1b1b; 
+}
+
+.uibox.dark { 
+  background: #ffe4a8; 
+}
+
+.tile { 
+  border: 2px solid #1b1b1b; 
+  background: #fff; 
+  border-radius: 10px; 
+  padding: 12px 10px; 
+  box-shadow: 0 2px 0 #1b1b1b; 
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.tile:hover {
+  background: #f0f8ff;
+  transform: translateY(-1px);
+}
+
+.btn-anime { 
+  display: flex; 
+  gap: 8px; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 10px 14px; 
+  border-radius: 999px; 
+  background: #101828; 
+  color: #fff; 
+  border: 2px solid #101828; 
+  box-shadow: 0 2px 0 #0b1220; 
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.btn-anime:disabled { 
+  opacity: .6; 
+  cursor: not-allowed; 
+}
+
+.btn-anime:hover:not(:disabled) { 
+  filter: brightness(1.1); 
+  transform: translateY(-1px);
+}

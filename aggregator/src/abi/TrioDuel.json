@@ -1,0 +1,469 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "TrioDuel",
+  "sourceName": "contracts/TrioDuel.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "HandlesAlreadySavedForRequestID",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidKMSSignatures",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NoHandleFoundForRequestID",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "newRound",
+          "type": "uint8"
+        }
+      ],
+      "name": "CheckpointApplied",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "requestID",
+          "type": "uint256"
+        }
+      ],
+      "name": "DecryptionFulfilled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "ElementsCommitted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "winner",
+          "type": "address"
+        }
+      ],
+      "name": "Finalized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "A",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "B",
+          "type": "address"
+        }
+      ],
+      "name": "MatchOpened",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        }
+      ],
+      "name": "WinnerRequested",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "BONUS_ELEM",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "BONUS_SKILL",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DMG_BASE",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "HP0",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "internalType": "externalEuint8[]",
+          "name": "skillsA",
+          "type": "bytes32[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "proofA",
+          "type": "bytes"
+        },
+        {
+          "internalType": "externalEuint8[]",
+          "name": "skillsB",
+          "type": "bytes32[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "proofB",
+          "type": "bytes"
+        }
+      ],
+      "name": "applyRounds",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "internalType": "externalEuint8",
+          "name": "encElem",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "proof",
+          "type": "bytes"
+        }
+      ],
+      "name": "commitElementA",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "internalType": "externalEuint8",
+          "name": "encElem",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "proof",
+          "type": "bytes"
+        }
+      ],
+      "name": "commitElementB",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "winner",
+          "type": "address"
+        }
+      ],
+      "name": "finalizeQuick",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "matches",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "pA",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "pB",
+          "type": "address"
+        },
+        {
+          "internalType": "uint64",
+          "name": "openedAt",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint8",
+          "name": "roundIdx",
+          "type": "uint8"
+        },
+        {
+          "internalType": "euint16",
+          "name": "hpA",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "euint16",
+          "name": "hpB",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "transcript",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bool",
+          "name": "settled",
+          "type": "bool"
+        },
+        {
+          "components": [
+            {
+              "internalType": "euint8",
+              "name": "elem",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "elemSet",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct TrioDuel.Player",
+          "name": "A",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "euint8",
+              "name": "elem",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "elemSet",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct TrioDuel.Player",
+          "name": "B",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastDecryptReq",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "decryptPending",
+          "type": "bool"
+        },
+        {
+          "internalType": "address",
+          "name": "winnerPlain",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "cleartexts",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "decryptionProof",
+          "type": "bytes"
+        }
+      ],
+      "name": "onWinnerDecrypted",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "opponent",
+          "type": "address"
+        }
+      ],
+      "name": "openMatch",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "requestWinnerDecryption",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}
