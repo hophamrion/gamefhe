@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .zama-bg {
-  background-color: #ffd200;
+  background-color: #000;
 }
 
 /* Pixel-perfect rendering */
@@ -185,23 +185,23 @@ canvas {
 
 /* Anime UI Styles */
 .uibox { 
-  border: 2px solid #1b1b1b; 
+  border: 2px solid #101828; 
   background: #fff3d3; 
   padding: 6px 10px; 
-  border-radius: 8px; 
-  box-shadow: 0 2px 0 #1b1b1b; 
+  border-radius: 10px; 
+  box-shadow: 0 2px 0 #101828; 
 }
 
 .uibox.dark { 
-  background: #ffe4a8; 
+  background: #ffe2a5; 
 }
 
 .tile { 
-  border: 2px solid #1b1b1b; 
+  border: 2px solid #101828; 
   background: #fff; 
-  border-radius: 10px; 
+  border-radius: 12px; 
   padding: 12px 10px; 
-  box-shadow: 0 2px 0 #1b1b1b; 
+  box-shadow: 0 2px 0 #101828; 
   cursor: pointer;
   transition: all 0.1s ease;
 }
@@ -216,11 +216,11 @@ canvas {
   gap: 8px; 
   align-items: center; 
   justify-content: center; 
-  padding: 10px 14px; 
+  padding: 10px 16px; 
   border-radius: 999px; 
-  background: #101828; 
+  background: #111827; 
   color: #fff; 
-  border: 2px solid #101828; 
+  border: 2px solid #111827; 
   box-shadow: 0 2px 0 #0b1220; 
   cursor: pointer;
   transition: all 0.1s ease;
@@ -234,4 +234,5 @@ canvas {
 .btn-anime:hover:not(:disabled) { 
   filter: brightness(1.1); 
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }

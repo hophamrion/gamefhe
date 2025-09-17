@@ -2,26 +2,80 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
+import { useMetaMaskEthersSigner } from '@/hooks/metamask/useMetaMaskEthersSigner';
 
 type Skill = 0|1|2; // 0 Slash, 1 Thrust, 2 Bash
 type Elem  = 0|1|2; // 0 Fire, 1 Water, 2 Wood
 
-const BASE_W = 640;  // to hơn, mượt hơn
+const BASE_W = 640;
 const BASE_H = 360;
 
-export default function AnimeDuelPIXI() {
+// Bot AI logic
+class BotAI {
+  private element: Elem;
+  private skillHistory: Skill[] = [];
+  
+  constructor() {
+    // Bot chọn element ngẫu nhiên
+    this.element = Math.floor(Math.random() * 3) as Elem;
+  }
+  
+  getElement(): Elem {
+    return this.element;
+  }
+  
+  chooseSkill(playerElement: Elem, playerSkillHistory: Skill[]): Skill {
+    // Simple AI: 30% random, 70% strategic
+    if (Math.random() < 0.3) {
+      return Math.floor(Math.random() * 3) as Skill;
+    }
+    
+    // Strategic: Counter player's most used skill
+    const skillCounts = [0, 0, 0];
+    playerSkillHistory.forEach(skill => skillCounts[skill]++);
+    const mostUsedSkill = skillCounts.indexOf(Math.max(...skillCounts)) as Skill;
+    
+    // Counter strategy: if player uses same skill often, use different one
+    if (skillCounts[mostUsedSkill] > 2) {
+      return ((mostUsedSkill + 1) % 3) as Skill;
+    }
+    
+    return mostUsedSkill;
+  }
+}
+
+export default function AnimeDuelGame() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const appRef  = useRef<PIXI.Application | null>(null);
   const sceneRef= useRef<{ root:PIXI.Container, bg:PIXI.Container, arena:PIXI.Container,
                            hero:PIXI.Container, opp:PIXI.Container,
                            hpA:{set:(v:number)=>void}, hpB:{set:(v:number)=>void} } | null>(null);
-  const [elem, setElem] = useState<Elem|null>(null);
+  
+  // MetaMask connection
+  const { isConnected, connect, accounts, chainId } = useMetaMaskEthersSigner();
+  
+  // Game state
+  const [gameState, setGameState] = useState<'connecting' | 'element-selection' | 'playing' | 'finished'>('connecting');
+  const [playerElement, setPlayerElement] = useState<Elem|null>(null);
+  const [botElement, setBotElement] = useState<Elem|null>(null);
   const [myHP, setMyHP] = useState(100);
   const [oppHP, setOppHP] = useState(100);
   const [round, setRound] = useState(1);
-  const [busy, setBusy]   = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [playerSkillHistory, setPlayerSkillHistory] = useState<Skill[]>([]);
+  
+  // Bot AI
+  const botRef = useRef<BotAI | null>(null);
 
-  // init PIXI
+  // Initialize bot when game starts
+  useEffect(() => {
+    if (gameState === 'element-selection') {
+      botRef.current = new BotAI();
+      setBotElement(botRef.current.getElement());
+    }
+  }, [gameState]);
+
+  // Initialize PIXI
   useEffect(() => {
     if (!wrapRef.current) return;
 
@@ -136,22 +190,7 @@ export default function AnimeDuelPIXI() {
     sceneRef.current?.hpB.set(oppHP);
   }, [myHP, oppHP]);
 
-  // ---- skill triggers (demo animation; bạn gắn encrypt/batch vào đây) ----
-  const sendSkill = async (s: Skill) => {
-    if (busy || elem===null || myHP<=0 || oppHP<=0) return;
-    setBusy(true);
-
-    // Play VFX
-    if (s===0 && sceneRef.current) playSlash(sceneRef.current);     // Slash
-    if (s===1 && sceneRef.current) playThrust(sceneRef.current);    // Thrust
-    if (s===2 && sceneRef.current) playBash(sceneRef.current);      // Bash
-
-    // TODO: Thay block dưới bằng: encrypt 3 lượt → POST aggregator /api/batch → đợi checkpoint → decrypt HP của bạn
-    const dmg = [24, 32, 20][s];
-    const oppDmg = [18,22,16][Math.floor(Math.random()*3) as Skill];
-    setTimeout(()=>{ setOppHP(h=>Math.max(0,h-dmg)); setMyHP(h=>Math.max(0,h-oppDmg)); setRound(r=>r+1); setBusy(false); }, 380);
-  };
-
+  // Check win condition
   const winner = useMemo(()=>{
     if (myHP<=0 && oppHP<=0) return 'DRAW';
     if (myHP<=0) return 'YOU LOSE';
@@ -159,18 +198,113 @@ export default function AnimeDuelPIXI() {
     return null;
   }, [myHP,oppHP]);
 
+  // Update game state based on winner
+  useEffect(() => {
+    if (winner) {
+      setGameState('finished');
+    }
+  }, [winner]);
+
+  // Calculate damage with element advantage
+  const calculateDamage = (attackerElement: Elem, defenderElement: Elem, skill: Skill): number => {
+    const baseDamage = [24, 32, 20][skill];
+    let totalDamage = baseDamage;
+    
+    // Element advantage: +10 damage
+    if ((attackerElement === 0 && defenderElement === 2) || // Fire beats Wood
+        (attackerElement === 1 && defenderElement === 0) || // Water beats Fire
+        (attackerElement === 2 && defenderElement === 1)) { // Wood beats Water
+      totalDamage += 10;
+    }
+    
+    return totalDamage;
+  };
+
+  // Player skill action
+  const sendSkill = async (skill: Skill) => {
+    if (busy || gameState !== 'playing' || myHP<=0 || oppHP<=0 || !botRef.current) return;
+    setBusy(true);
+
+    // Play VFX
+    if (skill===0 && sceneRef.current) playSlash(sceneRef.current);     // Slash
+    if (skill===1 && sceneRef.current) playThrust(sceneRef.current);    // Thrust
+    if (skill===2 && sceneRef.current) playBash(sceneRef.current);      // Bash
+
+    // Calculate player damage to bot
+    const playerDamage = calculateDamage(playerElement!, botElement!, skill);
+    
+    // Bot chooses skill
+    const botSkill = botRef.current.chooseSkill(playerElement!, playerSkillHistory);
+    const botDamage = calculateDamage(botElement!, playerElement!, botSkill);
+    
+    // Apply damage after animation
+    setTimeout(()=>{ 
+      setOppHP(h => Math.max(0, h - playerDamage)); 
+      setMyHP(h => Math.max(0, h - botDamage)); 
+      setRound(r => r + 1);
+      setPlayerSkillHistory(prev => [...prev, skill]);
+      setBusy(false); 
+    }, 380);
+  };
+
+  // Start game after element selection
+  const startGame = () => {
+    setGameState('playing');
+  };
+
+  // Connect MetaMask
+  const handleConnect = () => {
+    connect();
+  };
+
+  // Check if connected to correct network (Sepolia)
+  const isCorrectNetwork = chainId === 11155111; // Sepolia
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
       {/* Canvas holder */}
       <div ref={wrapRef} className="absolute inset-0" />
 
-      {/* Round badge */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2">
-        <div className="uibox dark text-xs px-3 py-1 shadow">Round {round}</div>
-      </div>
+      {/* MetaMask Connection Screen */}
+      {gameState === 'connecting' && (
+        <div className="absolute inset-0 bg-black/80 grid place-items-center">
+          <div className="uibox text-center px-6 py-4 max-w-md">
+            <h2 className="text-xl font-bold mb-4">🎮 TrioDuel FHEVM</h2>
+            {!isConnected ? (
+              <div>
+                <p className="mb-4">Connect your MetaMask wallet to start playing!</p>
+                <button 
+                  onClick={handleConnect}
+                  className="btn-anime w-full"
+                >
+                  🔗 Connect MetaMask
+                </button>
+              </div>
+            ) : !isCorrectNetwork ? (
+              <div>
+                <p className="mb-4 text-red-400">Please switch to Sepolia network</p>
+                <p className="text-sm opacity-70">Chain ID: 11155111</p>
+              </div>
+            ) : (
+              <div>
+                <p className="mb-4 text-green-400">✅ Connected to Sepolia</p>
+                <p className="text-sm opacity-70 mb-4">
+                  Account: {accounts?.[0]?.slice(0, 6)}...{accounts?.[0]?.slice(-4)}
+                </p>
+                <button 
+                  onClick={() => setGameState('element-selection')}
+                  className="btn-anime w-full"
+                >
+                  🚀 Start Game
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-      {/* Element picker (chọn 1 lần) */}
-      {elem===null && (
+      {/* Element Selection Screen */}
+      {gameState === 'element-selection' && (
         <div className="absolute inset-0 bg-black/40 grid place-items-center">
           <div className="uibox grid gap-3 p-4">
             <div className="text-sm">Choose your element</div>
@@ -180,34 +314,69 @@ export default function AnimeDuelPIXI() {
                 {k:1,label:'WATER',emoji:'💧'},
                 {k:2,label:'WOOD',emoji:'🍃'},
               ].map(x=>(
-                <button key={x.k} className="tile text-xs" onClick={()=>setElem(x.k as Elem)}>
+                <button key={x.k} className="tile text-xs" onClick={()=>setPlayerElement(x.k as Elem)}>
                   <div className="text-2xl">{x.emoji}</div>
                   <div className="mt-1">{x.label}</div>
                 </button>
               ))}
             </div>
-            <div className="text-[11px] opacity-70">Opp element stays hidden</div>
+            <div className="text-[11px] opacity-70">Bot element stays hidden</div>
+            {playerElement !== null && (
+              <button 
+                onClick={startGame}
+                className="btn-anime w-full mt-2"
+              >
+                ⚔️ Start Battle
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Skill buttons */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 grid grid-cols-3 gap-3">
-        <button className="btn-anime" disabled={!elem||!!winner||busy} onClick={()=>sendSkill(0)}>
-          <span className="text-lg">✂️</span><span>Slash</span>
-        </button>
-        <button className="btn-anime" disabled={!elem||!!winner||busy} onClick={()=>sendSkill(1)}>
-          <span className="text-lg">📏</span><span>Thrust</span>
-        </button>
-        <button className="btn-anime" disabled={!elem||!!winner||busy} onClick={()=>sendSkill(2)}>
-          <span className="text-lg">💥</span><span>Bash</span>
-        </button>
-      </div>
+      {/* Game UI */}
+      {gameState === 'playing' && (
+        <>
+          {/* Round badge */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2">
+            <div className="uibox dark text-xs px-3 py-1 shadow">Round {round}</div>
+          </div>
 
-      {/* Winner */}
-      {winner && (
+          {/* Skill buttons */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 grid grid-cols-3 gap-3">
+            <button className="btn-anime" disabled={!!winner||busy} onClick={()=>sendSkill(0)}>
+              <span className="text-lg">✂️</span><span>Slash</span>
+            </button>
+            <button className="btn-anime" disabled={!!winner||busy} onClick={()=>sendSkill(1)}>
+              <span className="text-lg">📏</span><span>Thrust</span>
+            </button>
+            <button className="btn-anime" disabled={!!winner||busy} onClick={()=>sendSkill(2)}>
+              <span className="text-lg">💥</span><span>Bash</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Winner Screen */}
+      {gameState === 'finished' && winner && (
         <div className="absolute inset-0 grid place-items-center">
-          <div className="uibox text-center px-4 py-3 text-base">{winner}</div>
+          <div className="uibox text-center px-4 py-3 text-base">
+            <div className="text-2xl mb-2">{winner}</div>
+            <button 
+              onClick={() => {
+                setGameState('connecting');
+                setMyHP(100);
+                setOppHP(100);
+                setRound(1);
+                setPlayerElement(null);
+                setBotElement(null);
+                setPlayerSkillHistory([]);
+                botRef.current = null;
+              }}
+              className="btn-anime mt-2"
+            >
+              🔄 Play Again
+            </button>
+          </div>
         </div>
       )}
     </div>

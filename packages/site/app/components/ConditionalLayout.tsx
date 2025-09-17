@@ -7,10 +7,19 @@ import { Providers } from '../providers';
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPixelDuel = pathname.includes('/pixel-duel');
+  const isAnimeDuel = pathname.includes('/anime-duel');
 
   if (isPixelDuel) {
     return (
       <div className="bg-gradient-to-b from-[#8ec5ff] to-[#6fb1ff] min-h-screen flex items-center justify-center p-4">
+        <Providers>{children}</Providers>
+      </div>
+    );
+  }
+
+  if (isAnimeDuel) {
+    return (
+      <div className="min-h-screen">
         <Providers>{children}</Providers>
       </div>
     );

@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
-const AnimeDuelPIXI = dynamic(()=>import('@/components/anime/AnimeDuelPIXI'), { ssr:false });
+const AnimeDuelChibiPIXI = dynamic(()=>import('@/components/anime/AnimeDuelChibiPIXI'), { ssr:false });
 
 export default function Page() {
-  return <AnimeDuelPIXI />;
+  return <AnimeDuelChibiPIXI />;
 }
